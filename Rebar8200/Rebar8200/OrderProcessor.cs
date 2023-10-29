@@ -1,25 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 public class OrderProcessor
 {
-    private MenuManager menuManager; // You'll need a reference to the MenuManager for menu access
-    private List<Invitation> orderHistory; // This is where you can store order details for MongoDB
+    private MenuManager menuManager;
+    private IMongoCollection<Invitation> orderCollection; // MongoDB collection for orders
+    private IMongoDatabase database;
 
-    public OrderProcessor(MenuManager menuManager)
+    public OrderProcessor(MenuManager menuManager, IMongoDatabase database) // Pass the database connection
     {
         this.menuManager = menuManager;
-        orderHistory = new List<Invitation>();
+        this.database = database; // Store the database connection
+
+        // Initialize MongoDB client and order collection
+        var client = new MongoClient("mongodb+srv://4900800:<password>@cluster0.bsff8tw.mongodb.net/<YourDatabaseName>\r\n");
+        orderCollection = database.GetCollection<Invitation>("Orders");
     }
+
 
     public void ProcessOrder()
     {
-        // Step 1: Create a new order (Invitation)
         Console.WriteLine("Welcome to Rebar Shake Chain!");
         Console.Write("Enter your name: ");
         string customerName = Console.ReadLine();
 
-        // Step 2: Display the menu and allow the customer to select shakes
         List<Shake> menu = menuManager.GetMenu();
         Console.WriteLine("Menu:");
         for (int i = 0; i < menu.Count; i++)
@@ -51,7 +57,6 @@ public class OrderProcessor
 
             Shake selectedShake = menu[choice - 1];
 
-            // Step 3: Prompt for the shake size
             Console.Write("Select size (S/M/L): ");
             if (!Enum.TryParse<Shake.ShakeSize>(Console.ReadLine(), out Shake.ShakeSize selectedSize))
             {
@@ -70,7 +75,7 @@ public class OrderProcessor
             return;
         }
 
-        // Step 4: Calculate the total price of the order
+
         Invitation order = new Invitation(customerName, "");
 
         foreach (Shake selectedShake in selectedShakes)
@@ -78,18 +83,42 @@ public class OrderProcessor
             order.Shakes.Add(selectedShake);
         }
 
+        // Calculate the total price of the order
+        double totalAmount = order.CalculateTotalAmount();
 
-        // Step 5: Generate a unique order ID
-        orderHistory.Add(order);
-
-        // Step 6: Record the order details (In this example, we simply added it to orderHistory list)
+        // Step 6: Record the order details in the MongoDB database
+        orderCollection.InsertOne(order);
 
         // Step 7: Display a success message
         Console.WriteLine($"Order placed successfully!\nOrder ID: {order.OrderID}");
     }
-
-    public List<Invitation> GetOrderHistory()
+    public void CloseCheckout()
     {
-        return orderHistory;
+        // Get the current date for filtering orders
+        DateTime today = DateTime.Now.Date;
+
+        // Get orders placed today from the MongoDB database
+        var filter = Builders<Invitation>.Filter.Gte(order => order.OrderDate, today);
+        var todayOrders = orderCollection.Find(filter).ToList();
+
+        // Calculate the number of orders and total revenue for the day
+        int numberOfOrders = todayOrders.Count;
+        double totalRevenue = todayOrders.Sum(order => order.CalculateTotalAmount());
+
+        // Print the statistics
+        Console.WriteLine($"Today's Statistics:");
+        Console.WriteLine($"Number of Orders: {numberOfOrders}");
+        Console.WriteLine($"Total Revenue: ${totalRevenue}");
+
+        // Save the statistics to the database (you can create a new collection for daily reports)
+        var dailyReportCollection = database.GetCollection<DailyReport>("DailyReports");
+        var dailyReport = new DailyReport
+        {
+            Date = today,
+            NumberOfOrders = numberOfOrders,
+            TotalRevenue = totalRevenue
+        };
+        dailyReportCollection.InsertOne(dailyReport);
     }
+
 }
