@@ -94,6 +94,13 @@ namespace RebarAPI.Data
             // Delete a specific shake by its GUID.
             _menu.DeleteOne(shake => shake.Id == id);
         }
+        public List<Order> GetOrdersByDate(DateTime date)
+        {
+            var startOfDay = date.Date;
+            var endOfDay = startOfDay.AddDays(1).AddTicks(-1);
+
+            return _orders.Find(order => order.OrderDate >= startOfDay && order.OrderDate <= endOfDay).ToList();
+        }
 
 
 

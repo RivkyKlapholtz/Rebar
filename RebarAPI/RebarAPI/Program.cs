@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json");
 
 // Add services to the container.
-builder.Services.AddSingleton<IMongoClient>(ServiceProvider => new MongoClient(builder.Configuration.GetConnectionString("mongodb://localhost:27017")));
+builder.Services.AddSingleton<IMongoClient>(ServiceProvider => new MongoClient(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddTransient<MongoService>();
 builder.Services.AddControllers();
 
@@ -35,5 +35,9 @@ app.UseSwaggerUI(c =>
 
 // Configure middleware, routes, etc.
 app.MapControllers();
+
+var databaseName = builder.Configuration["ConnectionStrings:DatabaseName"];
+Console.WriteLine($"Using database: {databaseName}");
+
 
 app.Run();

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RebarAPI.Data;
 using RebarAPI.Models;
+using System.Collections.Generic;
+
 
 [Route("api/[controller]")]
 [ApiController]
@@ -26,7 +28,7 @@ public class CheckoutController : ControllerBase
         var ordersToday = _mongoService.GetOrdersByDate(DateTime.Today);
 
         var totalOrders = ordersToday.Count;
-        var totalRevenue = ordersToday.Sum(order => order.TotalAmount);
+        var totalRevenue = ordersToday.Sum(order => order.TotalPrice);
 
         // You can further save this summary into the database for monthly/annual reporting.
 
