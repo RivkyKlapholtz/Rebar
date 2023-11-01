@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Driver;
 using RebarAPI.Data;
-using Microsoft.OpenApi.Models;  // <-- Add this import for Swagger
+using Microsoft.OpenApi.Models;  // <-- For Swagger
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +16,6 @@ builder.Services.AddSingleton<IMongoClient>(ServiceProvider => new MongoClient(b
 builder.Services.AddTransient<MongoService>();
 builder.Services.AddControllers();
 
-
 // Add Swagger services
 builder.Services.AddSwaggerGen(c =>
 {
@@ -25,19 +24,29 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// Use exception handling middleware (good for development)
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+// Use HTTPS redirection
+app.UseHttpsRedirection();
+
 // Use Swagger middleware
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API V1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "RebarAPI V1");
 });
 
+// Use the routing middleware
+app.UseRouting();
 
-// Configure middleware, routes, etc.
+// Configure the routes for your controllers
 app.MapControllers();
 
 var databaseName = builder.Configuration["ConnectionStrings:DatabaseName"];
 Console.WriteLine($"Using database: {databaseName}");
-
 
 app.Run();

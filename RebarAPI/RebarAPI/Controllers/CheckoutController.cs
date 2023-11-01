@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class CheckoutController : ControllerBase
 {
     private readonly MongoService _mongoService;
-    private readonly string managerPassword = "SomeSecurePassword"; // This should be stored securely, not hardcoded!
+    private readonly string managerPassword = "SomeSecurePassword"; 
 
     public CheckoutController(MongoService mongoService)
     {
@@ -30,7 +30,7 @@ public class CheckoutController : ControllerBase
         var totalOrders = ordersToday.Count;
         var totalRevenue = ordersToday.Sum(order => order.TotalPrice);
 
-        // You can further save this summary into the database for monthly/annual reporting.
+        // reminder! Save the information in the database
 
         return Ok($"Total orders today: {totalOrders}. Total revenue today: ${totalRevenue}");
     }
@@ -39,9 +39,6 @@ public class CheckoutController : ControllerBase
     [HttpGet("Report")]
     public ActionResult<IEnumerable<Order>> GetDailyReport()
     {
-        // Ensure that only authorized personnel can access the daily report
-        // This is a simplistic implementation; a more secure method should be used in a real application.
-
         var ordersToday = _mongoService.GetOrdersByDate(DateTime.Today);
         return Ok(ordersToday);
     }

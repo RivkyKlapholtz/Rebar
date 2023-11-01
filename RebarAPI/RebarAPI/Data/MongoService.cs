@@ -22,7 +22,11 @@ namespace RebarAPI.Data
 
         public Shake AddShakeToMenu(Shake shake)
         {
-            _menu.InsertOne(shake);
+            try { _menu.InsertOne(shake);
+                
+            }
+            catch(Exception ex) { Console.WriteLine(ex);  }
+
             return shake;
         }
 
@@ -51,16 +55,26 @@ namespace RebarAPI.Data
 
         public void RemoveShake(Guid id) => _menu.DeleteOne(shake => shake.Id == id);
 
-        // CRUD for Orders
+     
         public List<Order> GetOrders() => _orders.Find(order => true).ToList();
 
         public Order GetOrder(Guid id) => _orders.Find<Order>(order => order.Id == id).FirstOrDefault();
 
         public Order CreateOrder(Order order)
         {
+            if (order.Items == null || !order.Items.Any())
+            {
+                throw new ArgumentException("Order must have at least one item.");
+            }
+            if (order.Items.Count > 10)
+            {
+                throw new ArgumentException("You can order up to 10 shakes (inclusive) per order.");
+            }
+
             _orders.InsertOne(order);
             return order;
         }
+
 
         public void UpdateOrder(Guid id, Order orderIn) => _orders.ReplaceOne(order => order.Id == id, orderIn);
 
@@ -78,20 +92,17 @@ namespace RebarAPI.Data
 
         public Shake GetShakeById(Guid id)
         {
-            // Find a specific shake by its GUID.
             return _menu.Find<Shake>(shake => shake.Id == id).FirstOrDefault();
         }
 
 
         public void DeleteShake(Shake shakeIn)
         {
-            // Delete a specific shake using the Shake object.
             _menu.DeleteOne(shake => shake.Id == shakeIn.Id);
         }
 
         public void DeleteShakeById(Guid id)
         {
-            // Delete a specific shake by its GUID.
             _menu.DeleteOne(shake => shake.Id == id);
         }
         public List<Order> GetOrdersByDate(DateTime date)
@@ -101,9 +112,5 @@ namespace RebarAPI.Data
 
             return _orders.Find(order => order.OrderDate >= startOfDay && order.OrderDate <= endOfDay).ToList();
         }
-
-
-
-        //... Other DB Operations like getting today's orders, etc.
     }
 }

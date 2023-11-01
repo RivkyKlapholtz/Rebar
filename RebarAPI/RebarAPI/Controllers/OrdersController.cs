@@ -16,8 +16,6 @@ namespace RebarAPI.API
             _mongoService = mongoService;
         }
 
-        // ... other methods ...
-
         [HttpGet("{id}")]
         public ActionResult<Order> GetOrder(Guid id)
         {
@@ -28,30 +26,38 @@ namespace RebarAPI.API
             }
             return Ok(order);
         }
+        // GET: api/orders
+        [HttpGet]
+        public IActionResult GetAllOrders()
+        {
+            var orders = _mongoService.GetOrders();
+            return Ok(orders);
+        }
 
         [HttpPost]
         public ActionResult<Order> CreateOrder([FromBody] Order order)
         {
-            if (order == null)
+            if (order == null || string.IsNullOrWhiteSpace(order.CustomerName) || order.Items == null || order.Items.Count == 0)
             {
-                return BadRequest("Order data is required.");
+                return BadRequest("Order data or customer name is missing or incomplete.");
             }
 
-            if (order.Items == null || order.Items.Count == 0)
-                return BadRequest("Order must have at least one item.");
-
-            order.Id = Guid.NewGuid();
-            order.OrderDate = DateTime.Now;
-            order.TotalPrice = CalculateTotalPrice(order);
-
-            var createdOrder = _mongoService.AddOrder(order);
-            if (createdOrder == null)
+            try
+            {
+                order.CalculateTotalPrice(); 
+                var createdOrder = _mongoService.CreateOrder(order);
+                return CreatedAtAction(nameof(GetOrder), new { id = createdOrder.Id }, createdOrder);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
             {
                 return BadRequest("Unable to save order.");
             }
-
-            return CreatedAtAction(nameof(GetOrder), new { id = createdOrder.Id }, createdOrder);
         }
+
 
         private decimal CalculateTotalPrice(Order order)
         {

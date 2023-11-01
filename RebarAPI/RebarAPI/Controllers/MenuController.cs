@@ -21,7 +21,7 @@ public class MenuController : ControllerBase
     }
 
     // GET: api/Menu/{id}
-    [HttpGet("{id:length(24)}", Name = "GetShake")]
+    [HttpGet("{id:length(36)}", Name = "GetShake")]
     public ActionResult<Shake> Get(string id)
     {
         var shake = _mongoService.GetShakeById(new Guid(id));
@@ -44,7 +44,7 @@ public class MenuController : ControllerBase
     }
 
     // PUT: api/Menu/{id}
-    [HttpPut("{id:length(24)}")]
+    [HttpPut("{id:length(36)}")]
     public IActionResult Update(string id, Shake shakeIn)
     {
         var shake = _mongoService.GetShakeById(new Guid(id));
@@ -60,7 +60,7 @@ public class MenuController : ControllerBase
     }
 
     // DELETE: api/Menu/{id}
-    [HttpDelete("{id:length(24)}")]
+    [HttpDelete("{id:length(36)}")]
     public IActionResult Delete(string id)
     {
         var shake = _mongoService.GetShakeById(new Guid(id));
